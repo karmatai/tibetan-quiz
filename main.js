@@ -24,8 +24,10 @@ let currentRoundQuestions = null;
 let questionsAnsweredInCurrentDifficulty = 0;
 
 let selectedOption = null;     // index of selected option (primary or steal)
+let isLocked = false;          // true ONLY after Lock Answer clicked – clicking option must NOT lock
 let lockedOption = null;       // after Lock Answer clicked
 let stealMode = false;
+let isStealLocked = false;    // true only after Lock Steal Answer clicked
 let stealTeamIndex = null;      // which team is stealing
 let wrongOptionIndex = null;   // primary team's wrong choice (disabled in steal)
 
@@ -131,7 +133,7 @@ function getCurrentQuestion() {
 // -----------------------------------------------------------------------------
 function setOptionState(btn, state) {
   if (!btn) return;
-  btn.classList.remove("option-idle", "option-selected", "option-locked", "option-correct", "option-wrong", "option-disabled", "option-animate");
+  btn.classList.remove("option-idle", "option-selected", "option-selected-pending", "option-locked", "option-correct", "option-wrong", "option-disabled", "option-animate");
   btn.classList.add("option-" + state);
 }
 
@@ -156,33 +158,41 @@ function renderOptions(q, optionsState, disabledWrongIndex) {
   });
 }
 
+/**
+ * STEP 1: Select option only. Do NOT lock. User can change selection until Lock Answer is clicked.
+ */
 function onOptionClick(optionIndex) {
   const q = getCurrentQuestion();
   if (!q) return;
   if (stealMode) {
+    if (isStealLocked) return; // cannot change after Lock Steal Answer
     if (uiState !== "stealTeamSelection" && uiState !== "stealOptionSelected") return;
-    if (uiState === "stealTeamSelection") return; // must pick team first
-    if (optionIndex === wrongOptionIndex) return; // cannot choose wrong option
+    if (uiState === "stealTeamSelection") return;
+    if (optionIndex === wrongOptionIndex) return;
     selectedOption = optionIndex;
     uiState = "stealOptionSelected";
-    updateOptionSelectionUI(optionIndex, true);
+    updateOptionSelectionUI(optionIndex, true, true); // true = steal phase
     showLockStealAnswerButton();
     return;
   }
-  if (uiState !== "playing") return;
+  // Primary answering: do NOT lock on click; only Lock Answer button locks
+  if (isLocked) return;
+  if (uiState !== "playing" && uiState !== "optionSelected") return;
   selectedOption = optionIndex;
   uiState = "optionSelected";
-  updateOptionSelectionUI(optionIndex, true);
+  updateOptionSelectionUI(optionIndex, true, false); // false = primary, show yellow (selected-pending)
   showLockAnswerButton();
 }
 
-function updateOptionSelectionUI(selectedIdx, isSelected) {
+/** Before lock: use "selected-pending" (yellow). After lock: correct/wrong set elsewhere. */
+function updateOptionSelectionUI(selectedIdx, isSelected, isStealPhase) {
   const container = document.getElementById("optionsContainer");
   if (!container) return;
   const btns = container.querySelectorAll(".option-btn");
+  const state = isSelected ? (isStealPhase ? "selected" : "selected-pending") : "idle";
   btns.forEach((btn, i) => {
     if (parseInt(btn.dataset.optionIndex, 10) === selectedIdx) {
-      setOptionState(btn, isSelected ? "selected" : "idle");
+      setOptionState(btn, state);
     } else if (!btn.disabled) {
       setOptionState(btn, "idle");
     }
@@ -194,6 +204,14 @@ function showLockAnswerButton() {
   if (el) {
     el.style.display = "inline-block";
     el.textContent = "Lock Answer";
+    el.disabled = selectedOption === null || isLocked;
+  }
+}
+
+function updateLockAnswerButtonState() {
+  const el = document.getElementById("lockAnswerBtn");
+  if (el && el.style.display !== "none") {
+    el.disabled = selectedOption === null || isLocked;
   }
 }
 
@@ -230,16 +248,19 @@ function hideStealQuestionAndShowAnswerButtons() {
 }
 
 // -----------------------------------------------------------------------------
-// LOCK ANSWER – automatic correctness
+// LOCK ANSWER – ONLY this locks. Clicking an option must NOT lock.
 // -----------------------------------------------------------------------------
 function onLockAnswer() {
-  if (uiState !== "optionSelected" || selectedOption === null) return;
+  if (selectedOption === null) return;
+  if (isLocked) return; // prevent double lock
   const q = getCurrentQuestion();
   if (!q) return;
+  isLocked = true;
   stopTimer();
   lockedOption = selectedOption;
   uiState = "locked";
   hideLockAnswerButton();
+  updateLockAnswerButtonState();
 
   const correct = selectedOption === q.correctAnswer;
   if (correct) {
@@ -363,8 +384,10 @@ function selectStealTeam(teamIndex) {
 
 function onLockStealAnswer() {
   if (uiState !== "stealOptionSelected" || selectedOption === null || stealTeamIndex === null) return;
+  if (isStealLocked) return;
   const q = getCurrentQuestion();
   if (!q) return;
+  isStealLocked = true;
   hideLockStealAnswerButton();
   uiState = "stealLocked";
   const correct = selectedOption === q.correctAnswer;
@@ -469,9 +492,11 @@ function goToNextQuestion() {
   hideLockStealAnswerButton();
   hideStealQuestionAndShowAnswerButtons();
   stealMode = false;
+  isStealLocked = false;
   stealTeamIndex = null;
   wrongOptionIndex = null;
   selectedOption = null;
+  isLocked = false;
   lockedOption = null;
   timeUp = false;
 
@@ -590,8 +615,10 @@ function showWinner() {
 function nextQuestion() {
   uiState = "playing";
   selectedOption = null;
+  isLocked = false;
   lockedOption = null;
   stealMode = false;
+  isStealLocked = false;
   stealTeamIndex = null;
   wrongOptionIndex = null;
   timeUp = false;

@@ -100,10 +100,20 @@ h1 {
   border-color: gold;
 }
 
+/* Before lock: selected but changeable – yellow highlight */
+.option-btn.option-selected-pending {
+  background: #4a4a0a;
+  border-color: #ff0;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 0, 0.4);
+}
+
+/* Steal phase: selected option (same yellow until lock) */
 .option-btn.option-selected {
-  background: #2a3a2a;
-  border-color: #7cfc00;
-  box-shadow: 0 0 20px rgba(124, 252, 0, 0.4);
+  background: #4a4a0a;
+  border-color: #ff0;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 0, 0.4);
 }
 
 .option-btn.option-locked {
