@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="bo">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tibetan Quiz</title>
+
+<!-- Tibetan font: use local/Noto Sans Tibetan if available; Google Fonts link removed to avoid MIME block -->
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<div id="app">
+
+<h1>སྐད་ཡིག་ཉི་མོའི་འདྲི་རྩད།</h1>
+
+<div id="roundDifficultyDisplay" class="round-difficulty-display">
+  <span id="roundDisplay">Word Round</span> – <span id="difficultyDisplay">Easy</span>
+</div>
+
+<div id="mainGame">
+
+<div id="controls">
+  <button type="button" id="startBtn" onclick="nextQuestion()">འགོ་འཛུགས (Start)</button>
+  <button type="button" id="lockAnswerBtn" style="display:none;" onclick="onLockAnswer()">Lock Answer</button>
+  <button type="button" id="stealQuestionBtn" style="display:none;" onclick="onStealQuestionClick()">Steal Question</button>
+  <button type="button" id="showAnswerBtn" style="display:none;" onclick="onShowAnswerClick()">Show Answer</button>
+  <button type="button" id="lockStealAnswerBtn" style="display:none;" onclick="onLockStealAnswer()">Lock Steal Answer</button>
+  <button type="button" onclick="fullscreen()">Fullscreen</button>
+</div>
+
+<div id="timer">30</div>
+
+<div id="questionContent" class="question-content"></div>
+<img id="questionImage" class="question-image" alt="" style="display:none;" />
+
+<div id="optionsContainer" class="options-container"></div>
+
+<div id="answerArea" class="answer-area"></div>
+<div id="team" class="team-label"></div>
+<div id="scoreboard" class="scoreboard"></div>
+
+<!-- Steal opportunity: show only other teams -->
+<div id="stealPanel" style="display:none;" class="steal-panel">
+  <p id="stealPanelTitle">Steal opportunity</p>
+  <div id="stealTeamList" class="steal-team-list"></div>
+</div>
+
+</div>
+
+<div id="nextRoundPrompt" style="display:none;" class="next-round-prompt">
+  <p>Round finished!</p>
+  <button type="button" onclick="startNextRound()">Start next round</button>
+</div>
+
+<button type="button" onclick="showWinner()">Show Winner (end game early)</button>
+
+</div>
+
+<!-- Confetti / celebration overlay -->
+<div id="confetti" class="confetti" aria-hidden="true"></div>
+
+<script src="/data/questions.js"></script>
+<script src="/main.js"></script>
+
+</body>
+</html>
